@@ -6,5 +6,8 @@ use pinocchio::{
     program_error::ProgramError,
     pubkey::Pubkey,
     ProgramResult,
-}
+};
 
+pub struct DepositAccounts<'a> {
+
+}   
