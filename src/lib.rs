@@ -34,3 +34,7 @@ impl<'a> TryFrom<&'a [AccountView]> for IncrementAccounts<'a> {
         Ok(Self { counter, authority })
     }
 }
+#[repr(C)]
+pub struct CounterState {
+    pub count: u64,
+}
