@@ -1,4 +1,4 @@
-use pinocchio::{entrypoint, AccountView, Address, ProgramResult};
+use pinocchio::{entrypoint, error::ProgramError, AccountView, Address, ProgramResult};
 
 entrypoint!(process_instruction);
 
@@ -29,7 +29,7 @@ impl<'a> TryFrom<&'a [AccountView]> for IncrementAccounts<'a> {
             return Err(ProgramError::AccountNotWritable);
         }
         if !authority.is_signer() {
-            return Err(ProgramError::NotSigner);
+            return Err(ProgramError::MissingRequiredSignature);
         }
         Ok(Self { counter, authority })
     }
@@ -43,4 +43,14 @@ fn IncrementCounter(counter: &AccountView) -> ProgramResult {
     let mut state = bytemuck::from_bytes_mut::<CounterState>(&mut data);
     state.count += 1;
     Ok(())
+}
+let (discriminator, _rest) = instruction_data
+.split_first()
+.ok_or(ProgramError::InvalidInstructionData)?;
+match discriminator{
+    0 =>{
+    let ctx= IncrementAccounts::try_from(&accounts)?;
+    increment(ctx.counter)
+    }
+    _ => Err(ProgramError::InvalidInstructionData),
 }
