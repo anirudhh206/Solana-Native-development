@@ -38,3 +38,9 @@ impl<'a> TryFrom<&'a [AccountView]> for IncrementAccounts<'a> {
 pub struct CounterState {
     pub count: u64,
 }
+fn IncrementCounter(counter: &AccountView) -> ProgramResult {
+    let mut data = counter.try_borrow_mut_data()?;
+    let mut state = bytemuck::from_bytes_mut::<CounterState>(&mut data);
+    state.count += 1;
+    Ok(())
+}
