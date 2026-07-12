@@ -1,14 +1,13 @@
-#![no_std]
-
 use pinocchio::{entrypoint, AccountView, Address, ProgramResult};
 
 entrypoint!(process_instruction);
 
 pub fn process_instruction(
-    _program_id: &Address,
-    _accounts: &[AccountView],
-    _instruction_data: &[u8],
+    program_id: &Address,
+    accounts: &mut [AccountView],
+    instruction_data: &[u8],
 ) -> ProgramResult {
+    // everything happens from here
     Ok(())
 }
 pub struct IncrementAccounts<'a> {
@@ -19,9 +18,22 @@ pub struct IncrementAccounts<'a> {
 
 impl<'a> TryFrom<&'a [AccountView]> for IncrementAccounts<'a> {
     type Error = ProgramError;
-    fn tryfrom(account: &'a [AAccountView]) -> Result<Self, Self::Error> {
-        let [counter, authority, _rest @ ..] = account else {
-            return Err(ProgramResult::NotEnoughAccountkeys);
+
+    fn try_from(accounts: &'a [AccountView]) -> Result<Self, Self::Error> {
+        let [counter, authority, _rest @ ..] = accounts else {
+            return Err(ProgramError::NotEnoughAccountKeys);
         };
+
+        if counter.owner() != &crate::ID {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+        if !counter.is_writable() {
+            return Err(ProgramError::InvalidAccountData);
+        }
+        if !authority.is_signer() {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        Ok(Self { counter, authority })
     }
 }
