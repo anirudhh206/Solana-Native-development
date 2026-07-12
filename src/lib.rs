@@ -16,19 +16,21 @@ pub struct IncrementAccounts<'a> {
     pub authority: &'a AccountView,
 }
 
-impl TryFrom<'a &[AccountView]> for IncrementAccounts<'a> {
+impl<'a> TryFrom<&'a [AccountView]> for IncrementAccounts<'a> {
     type Error = ProgramError;
     fn try_from(accounts: &'a [AccountView]) -> Result<Self, Self::Error> {
         let [counter, authority, _rest @ ..] = accounts else {
             return Err(ProgramError::NotEnoughAccountKeys);
         };
-        Ok(Self { counter, authority })
-        if counter.owner() != &crate::id() {
+        if counter.owner() != &crate::ID {
             return Err(ProgramError::IncorrectProgramId);
         }
         if !counter.is_writable() {
             return Err(ProgramError::AccountNotWritable);
         }
-        if
+        if !authority.is_signer() {
+            return Err(ProgramError::NotSigner);
+        }
+        Ok(Self { counter, authority })
     }
- }
+}
