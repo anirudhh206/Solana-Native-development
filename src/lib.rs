@@ -7,11 +7,20 @@ pub fn process_instruction(
     accounts: &mut [AccountView],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    // everything happens from here
-    Ok(())
+    let (discriminator, _rest) = instruction_data
+        .split_first()
+        .ok_or(ProgramError::InvalidInstructionData)?;
+
+    match discriminator {
+        0 => {
+            let ctx = IncrementAccounts::try_from(&*accounts)?;
+            increment_counter(ctx.counter)
+        }
+        _ => Err(ProgramError::InvalidInstructionData),
+    }
 }
+
 pub struct IncrementAccounts<'a> {
-    //we needs this function to increment the counter as the counter helps to keep track of the number of times the program has been called
     pub counter: &'a AccountView,
     pub authority: &'a AccountView,
 }
@@ -34,23 +43,15 @@ impl<'a> TryFrom<&'a [AccountView]> for IncrementAccounts<'a> {
         Ok(Self { counter, authority })
     }
 }
+
 #[repr(C)]
 pub struct CounterState {
     pub count: u64,
 }
-fn IncrementCounter(counter: &AccountView) -> ProgramResult {
+
+fn increment_counter(counter: &AccountView) -> ProgramResult {
     let mut data = counter.try_borrow_mut_data()?;
-    let mut state = bytemuck::from_bytes_mut::<CounterState>(&mut data);
+    let state = bytemuck::from_bytes_mut::<CounterState>(&mut data);
     state.count += 1;
     Ok(())
-}
-let (discriminator, _rest) = instruction_data
-.split_first()
-.ok_or(ProgramError::InvalidInstructionData)?;
-match discriminator{
-    0 =>{
-    let ctx= IncrementAccounts::try_from(&accounts)?;
-    increment(ctx.counter)
-    }
-    _ => Err(ProgramError::InvalidInstructionData),
 }
