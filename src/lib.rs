@@ -1,5 +1,7 @@
 use pinocchio::{entrypoint, error::ProgramError, AccountView, Address, ProgramResult};
 
+pinocchio_pubkey::declare_id!("11111111111111111111111111111111111111111");
+
 entrypoint!(process_instruction);
 
 pub fn process_instruction(
@@ -35,7 +37,7 @@ impl<'a> TryFrom<&'a [AccountView]> for IncrementAccounts<'a> {
             return Err(ProgramError::IncorrectProgramId);
         }
         if !counter.is_writable() {
-            return Err(ProgramError::AccountNotWritable);
+            return Err(ProgramError::InvalidAccountData);
         }
         if !authority.is_signer() {
             return Err(ProgramError::MissingRequiredSignature);
@@ -45,12 +47,13 @@ impl<'a> TryFrom<&'a [AccountView]> for IncrementAccounts<'a> {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CounterState {
     pub count: u64,
 }
 
 fn increment_counter(counter: &AccountView) -> ProgramResult {
-    let mut data = counter.try_borrow_mut_data()?;
+    let mut data = counter.try_borrow_mut()?;
     let state = bytemuck::from_bytes_mut::<CounterState>(&mut data);
     state.count += 1;
     Ok(())
